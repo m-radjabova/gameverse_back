@@ -58,7 +58,6 @@ class DebtorService:
             connect.close()
 
     def get_debtor_by_id(self, debtor_id: int, shop_id: int):
-        """Qarzdorni ID bo'yicha olish (shop_id tekshiruvi bilan)"""
         connect = get_connection()
         cursor = connect.cursor()
         try:
@@ -84,7 +83,6 @@ class DebtorService:
             connect.close()
 
     def create_debtor(self, shop_id: int, debtor: Debtor):
-        """Yangi qarzdor yaratish"""
         connect = get_connection()
         cursor = connect.cursor()
         try:
@@ -108,7 +106,7 @@ class DebtorService:
                 (debtor_id, shop_id)
             )
             if not cursor.fetchone():
-                return {"success": False, "message": "Qarzdor topilmadi yoki boshqa do'konga tegishli"}
+                return {"success": False, "message": "Debtor not found in this shop"}
             
             cursor.execute(
                 """
@@ -129,7 +127,6 @@ class DebtorService:
             connect.close()
 
     def get_debt_by_debtor_id(self, debtor_id: int, shop_id: int):
-        """Qarzdorning qarzlarini olish"""
         connect = get_connection()
         cursor = connect.cursor()
         try:
@@ -149,7 +146,7 @@ class DebtorService:
                 LEFT JOIN payment_history p ON db.debt_id = p.debt_id
                 WHERE db.debtor_id = %s AND d.shop_id = %s
                 GROUP BY db.debt_id
-                ORDER BY db.date_time DESC
+                ORDER BY db.date_time ASC
                 """,
                 (debtor_id, shop_id),
             )
@@ -159,7 +156,6 @@ class DebtorService:
             connect.close()
 
     def get_payments_by_debt_id(self, debt_id: int):
-        """Qarz bo'yicha to'lovlar summasini olish"""
         connect = get_connection()
         cursor = connect.cursor()
         try:
@@ -179,7 +175,6 @@ class DebtorService:
             connect.close()
 
     def get_debt_by_id(self, debt_id: int, shop_id: int = None):
-        """Qarzni ID bo'yicha olish"""
         connect = get_connection()
         cursor = connect.cursor()
         try:
@@ -207,7 +202,6 @@ class DebtorService:
             connect.close()
 
     def repay_single_debt(self, debt_id: int, amount: int, shop_id: int = None):
-        """Bitta qarzni to'lash"""
         connect = get_connection()
         cursor = connect.cursor()
 
@@ -216,7 +210,7 @@ class DebtorService:
             if not debt:
                 return {
                     "success": False,
-                    "message": "Qarz topilmadi",
+                    "message": "Debt not found",
                     "paid": 0,
                     "debt_id": debt_id,
                     "status": None
@@ -225,7 +219,7 @@ class DebtorService:
             if debt["status"] == True:
                 return {
                     "success": False,
-                    "message": "Qarz allaqachon to'langan",
+                    "message": "Debt already fully paid",
                     "paid": 0,
                     "debt_id": debt_id,
                     "status": "already_paid"
@@ -237,7 +231,7 @@ class DebtorService:
             if amount > remaining_debt:
                 return {
                     "success": False,
-                    "message": "Kiritilgan summa qarz miqdoridan katta",
+                    "message": "The amount entered is greater than the amount owed.",
                     "paid": 0,
                     "debt_id": debt_id,
                     "remaining_amount": remaining_debt
@@ -273,7 +267,7 @@ class DebtorService:
             connect.commit()
             return {
                 "success": True,
-                "message": "To'lov amalga oshirildi",
+                "message": "Successfully paid debt",
                 "paid": paid_amount,
                 "debt_id": debt_id,
                 "status": status,
@@ -288,7 +282,6 @@ class DebtorService:
             connect.close()
 
     def debt_repayment(self, debtor_id: int, amount: int, shop_id: int):
-        """Qarzdorning qarzlarini tartib bilan to'lash"""
         connect = get_connection()
         cursor = connect.cursor()
         
@@ -315,7 +308,7 @@ class DebtorService:
             if not debts:
                 return {
                     "success": False, 
-                    "message": "To'lanmagan qarz topilmadi",
+                    "message": "Debts not found",
                     "remaining_amount": amount
                 }
             
@@ -372,7 +365,7 @@ class DebtorService:
             
             return {
                 "success": True,
-                "message": "To'lov muvaffaqiyatli amalga oshirildi",
+                "message": "Payment was successful.",
                 "total_paid": amount - remaining_amount,
                 "remaining_amount": remaining_amount,
                 "processed_debts": processed_debts
@@ -386,7 +379,6 @@ class DebtorService:
             connect.close()
 
     def get_debts_history_by_debtor_id(self, debtor_id: int, shop_id: int):
-        """Qarzdorning qarzlar tarixini olish"""
         connect = get_connection()
         cursor = connect.cursor()
 
@@ -428,7 +420,6 @@ class DebtorService:
             connect.close()
 
     def get_payment_history_by_debt_id(self, debt_id: int):
-        """Qarz bo'yicha to'lovlar tarixini olish"""
         connect = get_connection()
         cursor = connect.cursor()
         try:
@@ -450,7 +441,6 @@ class DebtorService:
             connect.close()
     
     def get_shop_statistics(self, shop_id: int):
-        """Do'kon statistikasi"""
         connect = get_connection()
         cursor = connect.cursor()
         try:
