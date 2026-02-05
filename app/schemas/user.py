@@ -1,28 +1,26 @@
-from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
-from typing import Optional, List
+from pydantic import BaseModel, EmailStr
+from typing import Optional
 from uuid import UUID
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    name: str = Field(min_length=3, max_length=50)
-    password: str = Field(min_length=6, max_length=100)
-
 
 class UserOut(BaseModel):
     id: UUID
-    name: str
     email: EmailStr
-    roles: List[str]
-    created_at: Optional[datetime] = None
+    username: str
+    roles: list[str]
+    avatar: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+
+
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
-    name: Optional[str] = None
-    password: Optional[str] = Field(default=None, min_length=6, max_length=100)
-    roles: Optional[List[str]] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    avatar: Optional[str] = None

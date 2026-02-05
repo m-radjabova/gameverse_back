@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -20,6 +20,28 @@ def me(current_user: User = Depends(get_current_user)):
 @router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return user_service.create_user(db, user)
+
+
+@router.post("/me/avatar", response_model=UserOut)
+def upload_my_avatar(
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return user_service.update_user_avatar(db, current_user, image)
+
+
+@router.post("/{user_id}/avatar", response_model=UserOut)
+def upload_user_avatar(
+    user_id: UUID,
+    image: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    user = user_service.get_user_by_id(db, user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user_service.update_user_avatar(db, user, image)
 
 
 @router.get("/", response_model=list[UserOut])
@@ -63,7 +85,6 @@ def update_password(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user_service.change_password(db, user, new_password)
-
 
 
 @router.patch("/{user_id}/roles", response_model=UserOut)

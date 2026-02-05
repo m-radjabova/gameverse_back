@@ -1,4 +1,7 @@
-from fastapi import HTTPException
+import os
+import uuid
+import shutil
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -6,25 +9,77 @@ from app.core.security import hash_password, verify_password
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
+UPLOAD_DIR = "app/static/uploads/avatars"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+ALLOWED_TYPES = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+}
+
+
+def save_image(image: UploadFile) -> str:
+    if image.content_type not in ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG, PNG, and WEBP images are allowed",
+        )
+
+    ext = ALLOWED_TYPES[image.content_type]
+    filename = f"{uuid.uuid4().hex}{ext}"
+    path = os.path.join(UPLOAD_DIR, filename)
+
+    try:
+        with open(path, "wb") as f:
+            shutil.copyfileobj(image.file, f)  # ✅ stream qilib yozadi
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to save image")
+
+    return f"/static/uploads/avatars/{filename}"
+
+
+def delete_old_avatar_if_exists(avatar: str | None):
+    if not avatar:
+        return
+    # /static/...  -> app/static/...
+    old_path = avatar.replace("/static/", "app/static/")
+    if os.path.exists(old_path):
+        try:
+            os.remove(old_path)
+        except Exception:
+            pass
+
+
+def update_user_avatar(db: Session, user: User, image: UploadFile):
+    delete_old_avatar_if_exists(user.avatar)
+
+    avatar = save_image(image)
+    user.avatar = avatar
+
+    db.commit()
+    db.refresh(user)
+    return user
+
 
 def check_email(db: Session, email: str) -> bool:
     return db.query(User).filter(User.email == email).first() is not None
 
 
-def check_name(db: Session, name: str) -> bool:
-    return db.query(User).filter(User.name == name).first() is not None
+def check_name(db: Session, username: str) -> bool:
+    return db.query(User).filter(User.username == username).first() is not None
 
 
 def create_user(db: Session, user: UserCreate):
     if check_email(db, user.email):
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    if check_name(db, user.name):
-        raise HTTPException(status_code=400, detail="Name already taken")
+    if check_name(db, user.username):
+        raise HTTPException(status_code=400, detail="Username already taken")
 
     new_user = User(
         email=user.email,
-        name=user.name,
+        username=user.username,
         hashed_password=hash_password(user.password),
         roles=["user"],
     )
@@ -38,10 +93,8 @@ def authenticate_user(db: Session, email: str, password: str):
     user = db.query(User).filter(User.email == email).first()
     if not user:
         return None
-
     if not verify_password(password, user.hashed_password):
         return None
-
     return user
 
 
@@ -71,9 +124,9 @@ def update_user(db: Session, user_id: UUID, user_data: UserUpdate):
         if check_email(db, update_data["email"]):
             raise HTTPException(status_code=400, detail="Email already registered")
 
-    if "name" in update_data and update_data["name"] != db_user.name:
-        if check_name(db, update_data["name"]):
-            raise HTTPException(status_code=400, detail="Name already taken")
+    if "username" in update_data and update_data["username"] != db_user.username:
+        if check_name(db, update_data["username"]):
+            raise HTTPException(status_code=400, detail="Username already taken")
 
     for key, value in update_data.items():
         if key == "password":
