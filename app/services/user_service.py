@@ -50,6 +50,19 @@ def delete_old_avatar_if_exists(avatar: str | None):
             pass
 
 
+def update_current_user(db: Session, current_user: User, user_data: UserUpdate):
+    if user_data.username is not None:
+        current_user.username = user_data.username.strip()
+    if user_data.email is not None:
+        current_user.email = user_data.email.strip().lower()
+
+    db.add(current_user)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
+
 def update_user_avatar(db: Session, user: User, image: UploadFile):
     delete_old_avatar_if_exists(user.avatar)
 
@@ -90,6 +103,8 @@ def create_user(db: Session, user: UserCreate):
 
 def authenticate_user(db: Session, email: str, password: str):
     user = db.query(User).filter(User.email == email).first()
+    print("EMAIL KELDI:", email)
+    print("USER TOPILDI:", bool(user))
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
@@ -160,6 +175,19 @@ def delete_user(db: Session, user_id: UUID):
 
 
 def change_password(db: Session, user: User, new_password: str):
+    user.hashed_password = hash_password(new_password)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def change_my_password(db: Session, user: User, current_password: str, new_password: str):
+    if not verify_password(current_password, user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    if not new_password or len(new_password) < 6:
+        raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+
     user.hashed_password = hash_password(new_password)
     db.commit()
     db.refresh(user)

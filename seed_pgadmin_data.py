@@ -154,6 +154,16 @@ def seed_data():
                 "rating": 4,
             },
             {
+                "category_name": "Frontend React",
+                "title": "UI/UX Design Masterclass",
+                "description": "UI va UX prinsiplaridan to real loyiha prototipigacha",
+                "image": None,
+                "level": "beginner",
+                "price": 89,
+                "duration": 300,
+                "rating": 5,
+            },
+            {
                 "category_name": "DevOps Basics",
                 "title": "Docker from Scratch",
                 "description": "Containerlar va production workflow",
@@ -183,6 +193,16 @@ def seed_data():
                 "duration": 560,
                 "rating": 5,
             },
+            {
+                "category_name": "Mobile Development",
+                "title": "React Native Mobile Development",
+                "description": "React Native bilan mobil ilova yaratish va publish",
+                "image": None,
+                "level": "beginner",
+                "price": 94,
+                "duration": 240,
+                "rating": 5,
+            },
         ]
 
         courses = {}
@@ -204,53 +224,120 @@ def seed_data():
             courses[item["title"]] = course
             created["courses"] += int(is_created)
 
-        lessons_payload = [
-            {
-                "course_title": "FastAPI Zero to Hero",
-                "order": 1,
-                "title": "Kirish va loyiha struktura",
-                "description": "FastAPI asoslari va papka arxitekturasi",
-                "is_free": True,
-                "video_url": "https://example.com/videos/fastapi-1",
-                "duration_sec": 900,
-            },
-            {
-                "course_title": "React Practical",
-                "order": 1,
-                "title": "React Setup va JSX",
-                "description": "Vite, JSX va birinchi komponent",
-                "is_free": True,
-                "video_url": "https://example.com/videos/react-1",
-                "duration_sec": 840,
-            },
-            {
-                "course_title": "Docker from Scratch",
-                "order": 1,
-                "title": "Docker Fundamentals",
-                "description": "Image, container va Dockerfile",
-                "is_free": False,
-                "video_url": "https://example.com/videos/docker-1",
-                "duration_sec": 960,
-            },
-            {
-                "course_title": "Airflow ETL Mastery",
-                "order": 1,
-                "title": "Airflow Intro",
-                "description": "DAG tushunchasi va scheduler",
-                "is_free": False,
-                "video_url": "https://example.com/videos/airflow-1",
-                "duration_sec": 1020,
-            },
-            {
-                "course_title": "Flutter App Builder",
-                "order": 1,
-                "title": "Flutter Widgets",
-                "description": "Asosiy widgetlar va layout",
-                "is_free": True,
-                "video_url": "https://example.com/videos/flutter-1",
-                "duration_sec": 930,
-            }
+        video_urls = [
+            "https://download.samplelib.com/mp4/sample-5s.mp4",
+            "https://download.samplelib.com/mp4/sample-10s.mp4",
+            "https://download.samplelib.com/mp4/sample-15s.mp4",
+            "https://download.samplelib.com/mp4/sample-20s.mp4",
+            "https://download.samplelib.com/mp4/sample-30s.mp4",
+            "https://download.samplelib.com/mp4/sample-40s.mp4",
+            "https://download.samplelib.com/mp4/sample-1mb.mp4",
+            "https://download.samplelib.com/mp4/sample-2mb.mp4",
+            "https://download.samplelib.com/mp4/sample-3mb.mp4",
+            "https://download.samplelib.com/mp4/sample-5mb.mp4",
         ]
+
+        lesson_topics_by_course = {
+            "FastAPI Zero to Hero": [
+                "Kirish va loyiha struktura",
+                "Router va endpointlar",
+                "Pydantic schema bilan validatsiya",
+                "SQLAlchemy model asoslari",
+                "CRUD service qatlami",
+                "JWT autentifikatsiya",
+                "Role-based authorization",
+                "Pagination va filter",
+                "Alembic migration",
+                "Deploy va production sozlama",
+            ],
+            "React Practical": [
+                "React Setup va JSX",
+                "Komponentlar va props",
+                "State va event handling",
+                "Hooklar bilan ishlash",
+                "React Router",
+                "Form validatsiya",
+                "Axios bilan API chaqirish",
+                "Context API",
+                "Reusable UI komponentlar",
+                "Build va deploy",
+            ],
+            "UI/UX Design Masterclass": [
+                "Introduction to Design",
+                "Design Thinking asoslari",
+                "User Persona yaratish",
+                "User Journey Map",
+                "Wireframe tayyorlash",
+                "Color Theory va typography",
+                "Design System asoslari",
+                "Prototyping amaliyoti",
+                "Usability testing",
+                "Portfolio case study",
+            ],
+            "Docker from Scratch": [
+                "Docker Fundamentals",
+                "Image va layer tushunchasi",
+                "Dockerfile best practice",
+                "Container networking",
+                "Volume va data persist",
+                "Docker Compose",
+                "Multi-stage build",
+                "Environment variables",
+                "Registry bilan ishlash",
+                "Production container strategy",
+            ],
+            "Airflow ETL Mastery": [
+                "Airflow Intro",
+                "DAG arxitekturasi",
+                "Operatorlar bilan ishlash",
+                "Task dependency",
+                "XCom va parametrlar",
+                "Schedule va trigger",
+                "Retry va alert sozlamasi",
+                "ETL pipeline dizayni",
+                "Monitoring va logging",
+                "Production best practice",
+            ],
+            "Flutter App Builder": [
+                "Flutter Widgets",
+                "Layout va navigation",
+                "State management",
+                "Form input va validation",
+                "REST API integratsiya",
+                "Local storage",
+                "Authentication flow",
+                "Responsive UI",
+                "Performance optimization",
+                "Release build",
+            ],
+            "React Native Mobile Development": [
+                "React Native Intro",
+                "Environment setup",
+                "Core components",
+                "Navigation stack",
+                "State management",
+                "API integration",
+                "Authentication flow",
+                "Local storage",
+                "Performance tuning",
+                "Build and release",
+            ],
+        }
+
+        lessons_payload = []
+        for course_title, topics in lesson_topics_by_course.items():
+            for idx, topic in enumerate(topics, start=1):
+                lessons_payload.append(
+                    {
+                        "course_title": course_title,
+                        "order": idx,
+                        "title": topic,
+                        "description": f"{course_title} kursi uchun {topic} darsi.",
+                        "is_free": idx <= 2,
+                        "video_url": video_urls[idx - 1],
+                        "duration_sec": 600 + (idx * 60),
+                    }
+                )
 
         lessons = {}
         for item in lessons_payload:
@@ -270,53 +357,20 @@ def seed_data():
             lessons[f"{item['course_title']}#{item['order']}"] = lesson
             created["lessons"] += int(is_created)
 
-        assignments_payload = [
-            {
-                "lesson_key": "FastAPI Zero to Hero#1",
-                "order": 1,
-                "title": "User CRUD endpoint yozish",
-                "description": "GET/POST/PUT/DELETE endpointlarini yarating",
-                "max_score": 100,
-                "is_required": True,
-                "due_days": 7,
-            },
-            {
-                "lesson_key": "React Practical#1",
-                "order": 1,
-                "title": "Todo UI komponenti",
-                "description": "Todo listni React state bilan yozing",
-                "max_score": 100,
-                "is_required": True,
-                "due_days": 5,
-            },
-            {
-                "lesson_key": "Docker from Scratch#1",
-                "order": 1,
-                "title": "Dockerfile yozish",
-                "description": "Python app uchun optimal Dockerfile tayyorlang",
-                "max_score": 100,
-                "is_required": True,
-                "due_days": 6,
-            },
-            {
-                "lesson_key": "Airflow ETL Mastery#1",
-                "order": 1,
-                "title": "Oddiy DAG yaratish",
-                "description": "3 taskdan iborat DAG yozing",
-                "max_score": 100,
-                "is_required": False,
-                "due_days": 8,
-            },
-            {
-                "lesson_key": "Flutter App Builder#1",
-                "order": 1,
-                "title": "Login sahifasi UI",
-                "description": "Flutter'da login ekranini chizing",
-                "max_score": 100,
-                "is_required": True,
-                "due_days": 4,
-            },
-        ]
+        assignments_payload = []
+        for lesson_key, lesson in lessons.items():
+            for order in range(1, 4):
+                assignments_payload.append(
+                    {
+                        "lesson_key": lesson_key,
+                        "order": order,
+                        "title": f"{lesson.title} - Vazifa {order}",
+                        "description": f"{lesson.title} bo'yicha {order}-amaliy topshiriq.",
+                        "max_score": 100,
+                        "is_required": True,
+                        "due_days": 5 + order,
+                    }
+                )
 
         assignments = []
         for item in assignments_payload:

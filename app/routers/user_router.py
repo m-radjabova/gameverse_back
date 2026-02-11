@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from uuid import UUID
 
@@ -11,12 +12,30 @@ from app.services import user_service
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
+class ChangePasswordSchema(BaseModel):
+    current_password: str
+    new_password: str
 
 @router.get("/me", response_model=UserOut)
 def me(current_user: User = Depends(get_current_user)):
     return current_user
 
+@router.put("/me", response_model=UserOut)
+def update_me(
+    user_data: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return user_service.update_current_user(db, current_user, user_data)
 
+
+@router.patch("/me/password", response_model=UserOut)
+def change_my_password(
+    data: ChangePasswordSchema,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    return user_service.change_my_password(db, current_user, data.current_password, data.new_password)
 @router.post("/", response_model=UserOut, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return user_service.create_user(db, user)

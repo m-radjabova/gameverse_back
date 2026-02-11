@@ -9,6 +9,7 @@ from app.routers.course_router import router as course_router
 from app.routers.lesson_router import router as lesson_router
 from app.routers.assignments_router import router as assignments_router
 from app.routers.progress_router import router as progress_router
+from app.routers.lesson_chat_router import router as lesson_chat_router
 
 app = FastAPI()
 
@@ -21,6 +22,7 @@ app.include_router(course_router)
 app.include_router(lesson_router)
 app.include_router(assignments_router)
 app.include_router(progress_router)
+app.include_router(lesson_chat_router)
 
 app.add_middleware(
     CORSMiddleware,
