@@ -75,7 +75,6 @@ def list_assignments(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    # hamma ko‘ra olsin (xohlasang course purchase tekshiruvini keyin qo‘shamiz)
     return (
         db.query(Assignment)
         .filter(Assignment.lesson_id == lesson_id)

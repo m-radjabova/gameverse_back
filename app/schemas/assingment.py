@@ -10,7 +10,7 @@ class AssignmentCreate(BaseModel):
     description: Optional[str] = None
     order: int = 1
     due_at: Optional[datetime] = None
-    max_score: Optional[int] = None
+    max_score: Optional[int] = Field(None, ge=1, le=5)
     is_required: bool = True
 
 
@@ -19,7 +19,7 @@ class AssignmentUpdate(BaseModel):
     description: Optional[str] = None
     order: Optional[int] = None
     due_at: Optional[datetime] = None
-    max_score: Optional[int] = None
+    max_score: Optional[int] = Field(None, ge=1, le=5)
     is_required: Optional[bool] = None
 
 
@@ -60,5 +60,5 @@ class SubmissionOut(BaseModel):
 
 
 class GradeSubmission(BaseModel):
-    score: int
+    score: int = Field(..., ge=1, le=5)
     status: str = "graded"
