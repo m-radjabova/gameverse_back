@@ -14,6 +14,10 @@ from app.schemas.lesson_chat import (
     LessonChatThreadOut,
 )
 
+from fastapi import WebSocket, WebSocketDisconnect
+from app.realtime.lesson_chat_ws import manager
+from app.core.jwt import decode_token
+
 router = APIRouter(prefix="/lesson-chat", tags=["Lesson Chat"])
 
 
@@ -149,7 +153,16 @@ def create_my_lesson_message(
         .filter(LessonChatMessage.id == message.id)
         .first()
     )
-    return _serialize_message(message)
+    out = _serialize_message(message)
+
+    import anyio
+    anyio.from_thread.run(
+        manager.broadcast,
+        thread.id,
+        {"type": "new_message", "data": out},
+    )
+
+    return out
 
 
 @router.get("/lessons/{lesson_id}/threads", response_model=list[LessonChatThreadOut])
@@ -199,7 +212,6 @@ def list_thread_messages(
     )
     return [_serialize_message(item) for item in rows]
 
-
 @router.post(
     "/threads/{thread_id}/messages",
     response_model=LessonChatMessageOut,
@@ -233,10 +245,76 @@ def create_thread_message(
     db.add(message)
     db.commit()
     db.refresh(message)
+
     message = (
         db.query(LessonChatMessage)
         .options(joinedload(LessonChatMessage.sender))
         .filter(LessonChatMessage.id == message.id)
         .first()
     )
-    return _serialize_message(message)
+
+    out = _serialize_message(message)
+
+    import anyio
+    anyio.from_thread.run(
+        manager.broadcast,
+        thread.id,
+        {"type": "new_message", "data": out},
+    )
+
+    return out
+
+
+
+@router.websocket("/ws/threads/{thread_id}")
+async def websocket_thread_chat(
+    websocket: WebSocket,
+    thread_id: UUID,
+    db: Session = Depends(get_db),
+):
+    token = websocket.query_params.get("token")
+    if not token:
+        await websocket.close(code=1008)
+        return
+
+    payload = decode_token(token)
+    if not payload or payload.get("type") != "access":
+        await websocket.close(code=1008)
+        return
+
+    user_id = payload.get("sub")
+    if not user_id:
+        await websocket.close(code=1008)
+        return
+
+    try:
+        user_uuid = UUID(user_id)
+    except:
+        await websocket.close(code=1008)
+        return
+
+    current_user = db.query(User).filter(User.id == user_uuid).first()
+    if not current_user:
+        await websocket.close(code=1008)
+        return
+
+    thread = db.query(LessonChatThread).filter(
+        LessonChatThread.id == thread_id
+    ).first()
+
+    if not thread:
+        await websocket.close(code=1008)
+        return
+
+    if not _is_teacher_or_admin(current_user):
+        if thread.student_id != current_user.id:
+            await websocket.close(code=1008)
+            return
+
+    await manager.connect(thread_id, websocket)
+
+    try:
+        while True:
+            await websocket.receive_text() 
+    except WebSocketDisconnect:
+        manager.disconnect(thread_id, websocket)
