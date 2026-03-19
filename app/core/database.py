@@ -7,13 +7,19 @@ from sqlalchemy.orm import sessionmaker
 load_dotenv()
 
 
+def get_env(name: str) -> str | None:
+    value = os.getenv(name)
+    return value.strip() if value is not None else None
+
+
 def get_database_url() -> str:
-    database_url = os.getenv("DATABASE_URL")
+    database_url = get_env("DATABASE_URL")
     if database_url:
         return database_url
 
     required_env_vars = ["DB_USER", "DB_PASS", "DB_HOST", "DB_PORT", "DB_NAME"]
-    missing_env_vars = [name for name in required_env_vars if not os.getenv(name)]
+    env_values = {name: get_env(name) for name in required_env_vars}
+    missing_env_vars = [name for name, value in env_values.items() if not value]
     if missing_env_vars:
         missing = ", ".join(missing_env_vars)
         raise ValueError(
@@ -21,8 +27,8 @@ def get_database_url() -> str:
         )
 
     return (
-        f"postgresql://{os.getenv('DB_USER')}:{os.getenv('DB_PASS')}"
-        f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
+        f"postgresql://{env_values['DB_USER']}:{env_values['DB_PASS']}"
+        f"@{env_values['DB_HOST']}:{env_values['DB_PORT']}/{env_values['DB_NAME']}"
     )
 
 
