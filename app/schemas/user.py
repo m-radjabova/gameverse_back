@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
@@ -8,6 +9,7 @@ class UserOut(BaseModel):
     username: str
     roles: list[str]
     avatar: Optional[str] = None
+    created_at: datetime
 
     class Config:
         from_attributes = True
@@ -24,3 +26,5 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
     avatar: Optional[str] = None
+
+
