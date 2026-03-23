@@ -18,6 +18,11 @@ class GameFeedbackCommentOut(BaseModel):
     rating: int
     comment: str
     created_at: datetime
+    updated_at: datetime
+    is_approved: bool
+    approved_at: datetime | None = None
+    approved_by: UUID | None = None
+    approver_username: str | None = None
 
 
 class GameFeedbackCommentsOut(BaseModel):
@@ -32,4 +37,4 @@ class GameFeedbackSummaryOut(BaseModel):
 
 
 class GameFeedbackSaveOut(BaseModel):
-    status: str = "ok"
+    status: str
