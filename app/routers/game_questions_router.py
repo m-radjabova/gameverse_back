@@ -23,7 +23,10 @@ def get_game_questions(
     if not key:
         raise HTTPException(status_code=400, detail="game_key is required")
 
-    owner_id = teacher_id or current_user.id
+    if teacher_id and teacher_id != current_user.id and "admin" not in (current_user.roles or []):
+        raise HTTPException(status_code=403, detail="Cannot access another teacher's questions")
+
+    owner_id = teacher_id if teacher_id and "admin" in (current_user.roles or []) else current_user.id
     storage_key = f"{owner_id}:{key}"
 
     data = db.query(GameQuestionSet).filter(GameQuestionSet.game_key == storage_key).first()
