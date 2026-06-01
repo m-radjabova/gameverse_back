@@ -85,7 +85,7 @@ def upsert_my_feedback(
     return item
 
 
-def get_feedback_summary(db: Session, game_key: str, current_user: User) -> dict:
+def get_feedback_summary(db: Session, game_key: str, current_user: User | None = None) -> dict:
     key = normalize_game_key(game_key)
 
     avg_value, ratings_count = (
@@ -94,11 +94,13 @@ def get_feedback_summary(db: Session, game_key: str, current_user: User) -> dict
         .one()
     )
 
-    my_rating_row = (
-        db.query(GameFeedback.rating)
-        .filter(GameFeedback.game_key == key, GameFeedback.user_id == current_user.id)
-        .first()
-    )
+    my_rating_row = None
+    if current_user is not None:
+        my_rating_row = (
+            db.query(GameFeedback.rating)
+            .filter(GameFeedback.game_key == key, GameFeedback.user_id == current_user.id)
+            .first()
+        )
 
     return {
         "game_key": key,

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.dependencies.auth import get_current_user
+from app.dependencies.auth import get_current_user, get_current_user_optional
 from app.dependencies.roles import require_admin
 from app.models.user import User
 from app.schemas.game_feedback import (
@@ -94,7 +94,7 @@ def reject_game_feedback(
 def game_feedback_summary(
     game_key: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_current_user_optional),
 ):
     data = get_feedback_summary(db=db, game_key=game_key, current_user=current_user)
     return GameFeedbackSummaryOut(**data)
@@ -105,7 +105,6 @@ def game_feedback_comments(
     game_key: str,
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
     safe_limit = max(1, min(limit, 100))
     items = get_feedback_comments(db=db, game_key=game_key, limit=safe_limit)

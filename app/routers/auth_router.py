@@ -47,10 +47,11 @@ def _make_unique_username(db: Session, base_username: str) -> str:
 
 @router.post("/login")
 def login(data: LoginSchema, db: Session = Depends(get_db)):
-    user = authenticate_user(db, data.email, data.password)
+    user, error_type = authenticate_user(db, data.email, data.password)
 
     if not user:
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
+        detail = "Email topilmadi" if error_type == "email" else "Parol noto'g'ri"
+        raise HTTPException(status_code=401, detail=detail)
 
     access_token = create_token(
         payload={"sub": str(user.id), "type": "access", "roles": user.roles},

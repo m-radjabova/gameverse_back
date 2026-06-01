@@ -5,7 +5,7 @@ from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 from uuid import UUID
 
-from app.core.security import hash_password, verify_password
+from app.core.security import hash_password, verify_password, verify_password_with_upgrade
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 
@@ -94,10 +94,10 @@ def create_user(db: Session, user: UserCreate):
     normalized_email = normalize_email(user.email)
 
     if check_email(db, normalized_email):
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=409, detail="Email already registered")
 
     if check_name(db, user.username):
-        raise HTTPException(status_code=400, detail="Username already taken")
+        raise HTTPException(status_code=409, detail="Username already taken")
 
     new_user = User(
         email=normalized_email,
@@ -111,16 +111,19 @@ def create_user(db: Session, user: UserCreate):
     return new_user
 
 
-def authenticate_user(db: Session, email: str, password: str):
+def authenticate_user(db: Session, email: str, password: str) -> tuple[User | None, str | None]:
     normalized_email = normalize_email(email)
     user = db.query(User).filter(User.email == normalized_email).first()
-    print("EMAIL KELDI:", email)
-    print("USER TOPILDI:", bool(user))
     if not user:
-        return None
-    if not verify_password(password, user.hashed_password):
-        return None
-    return user
+        return None, "email"
+    password_ok, should_upgrade = verify_password_with_upgrade(password, user.hashed_password)
+    if not password_ok:
+        return None, "password"
+    if should_upgrade:
+        user.hashed_password = hash_password(password)
+        db.commit()
+        db.refresh(user)
+    return user, None
 
 
 def save_refresh_token_hash(db: Session, user: User, refresh_token_hash: str):
