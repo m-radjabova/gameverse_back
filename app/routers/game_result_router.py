@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
-from app.dependencies.auth import get_current_user_optional
+from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.schemas.game_result import GameLeaderboardOut, GameResultCreate, GameResultSaveOut
 from app.services.game_result_service import create_game_result, get_game_leaderboard
@@ -26,7 +26,7 @@ def save_game_result(
     game_key: str,
     payload: GameResultCreate,
     db: Session = Depends(get_db),
-    current_user: User | None = Depends(get_current_user_optional),
+    current_user: User = Depends(get_current_user),
 ):
     create_game_result(db=db, game_key=game_key, payload=payload, current_user=current_user)
     return GameResultSaveOut(status="ok")

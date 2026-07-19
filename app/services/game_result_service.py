@@ -39,7 +39,7 @@ def get_game_leaderboard(db: Session, game_key: str, limit: int = 10) -> list[di
     key = normalize_game_key(game_key)
     rows = (
         db.query(GameResult)
-        .filter(GameResult.game_key == key)
+        .filter(GameResult.game_key == key, GameResult.user_id.isnot(None))
         .order_by(GameResult.score.desc(), GameResult.created_at.asc())
         .limit(limit)
         .all()
